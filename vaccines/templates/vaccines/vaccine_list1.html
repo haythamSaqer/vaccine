@@ -1,0 +1,130 @@
+{#{% extends 'base1.html' %}#}
+{##}
+{#{% block title %}Vaccines{% endblock %}#}
+{##}
+{#{% block extra_css %}#}
+{#  <style>#}
+{#    body {#}
+{#      background-color: #F1F8E9;#}
+{#    }#}
+{#    h1 {#}
+{#      color: #25633E;#}
+{#    }#}
+{#    .card {#}
+{#      background-color: #fff;#}
+{#      border: 1px solid #BDECB6;#}
+{#    }#}
+{#    .card-title {#}
+{#      color: #25633E;#}
+{#    }#}
+{#    .card-text {#}
+{#      color: #424242;#}
+{#    }#}
+{#    .btn-outline-secondary {#}
+{#      color: #25633E;#}
+{#      border-color: #25633E;#}
+{#    }#}
+{#    .btn-outline-secondary:hover {#}
+{#      background-color: #25633E;#}
+{#      color: #BDECB6;#}
+{#    }#}
+{#  </style>#}
+{#{% endblock %}#}
+{##}
+{#{% block content %}#}
+{#  <div class="container my-5">#}
+{#    <h1 class="mb-4">Vaccines</h1>#}
+{#    <div class="row">#}
+{#      {% for vaccine in vaccines %}#}
+{#        <div class="col-md-4 mb-4">#}
+{#          <div class="card">#}
+{#            <div class="card-body">#}
+{#              <h5 class="card-title">{{ vaccine.name }}</h5>#}
+{#              <p class="card-text">{{ vaccine.description }}</p>#}
+{#              <div class="d-flex justify-content-between align-items-center">#}
+{#                <div class="btn-group">#}
+{#                  <a href="{% url 'vaccines:vaccine_detail' vaccine.id %}" class="btn btn-sm btn-outline-secondary">View</a>#}
+{#                  <a href="{% url 'vaccines:book_appointment' vaccine.id %}" class="btn btn-sm btn-outline-secondary">Book Appointment</a>#}
+{#                </div>#}
+{#              </div>#}
+{#            </div>#}
+{#          </div>#}
+{#        </div>#}
+{#      {% empty %}#}
+{#        <div class="col-md-12">#}
+{#          <p class="text-center">No vaccines available.</p>#}
+{#        </div>#}
+{#      {% endfor %}#}
+{#    </div>#}
+{#  </div>#}
+{#{% endblock %}#}
+
+{% extends 'base1.html' %}
+
+{% block title %}قائمة التطعيمات{% endblock %}
+
+{% block extra_css %}
+  <style>
+    body {
+      background-color: #F1F8E9;
+    }
+    h1 {
+      color: #25633E;
+      font-size: 48px;
+      margin-top: 48px;
+      margin-bottom: 48px;
+    }
+    .card {
+      margin-bottom: 24px;
+      box-shadow: 0 0 16px rgba(0, 0, 0, 0.1);
+      transition: box-shadow 0.2s ease-in-out;
+    }
+    .card:hover {
+      box-shadow: 0 0 24px rgba(0, 0, 0, 0.2);
+    }
+    .card-title {
+      color: #25633E;
+      font-size: 24px;
+      margin-bottom: 16px;
+    }
+    .card-text {
+      color: #666;
+      font-size: 16px;
+      margin-bottom: 24px;
+    }
+    .btn {
+      background-color: #25633E;
+      color: #fff;
+      font-size: 16px;
+      border-radius: 0;
+    }
+    .btn:hover {
+      background-color: #BDECB6;
+      color: #25633E;
+    }
+  </style>
+{% endblock %}
+
+{% block content %}
+  <div class="container">
+    <h1 class="text-center">قائمة التطعيمات</h1>
+    <div class="row">
+      {% for vaccine in vaccines %}
+        <div class="col-md-4">
+          <div class="card">
+            <div class="card-body text-right" >
+              <h5 class="card-title">{{ vaccine.name }}</h5>
+              <p class="card-text">{{ vaccine.description }}</p>
+              <div class="d-flex justify-content-between align-items-center">
+                <a href="{% url 'vaccines:vaccine_detail' vaccine.id %}" class="btn">عرض التفاصيل</a>
+                <a href="{% url 'vaccines:book_appointment' vaccine.id %}" class="btn">حجز موعد</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      {% empty %}
+        <p class="text-center">لا توجد تطعيمات متاحة حاليًا.</p>
+      {% endfor %}
+    </div>
+  </div>
+{% endblock %}

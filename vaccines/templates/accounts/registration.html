@@ -1,0 +1,64 @@
+{% extends 'base1.html' %}
+{% load crispy_forms_filters %}
+
+{% block title %}Register{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div class="row justify-content-center">
+    <div class="col-md-6">
+      <div class="card">
+        <div class="card-body">
+          <h2 class="card-title text-center mb-4">تسجيل الدخول</h2>
+          <form method="post" class="text-right">
+            {% csrf_token %}
+        <div class="form-group text-right">
+            <label for="username">اسم المستخدم:</label>
+            <input type="text" class="form-control" id="username" name="username" placeholder="ادخل اسم المستخدم">
+        </div>
+        <div class="form-group text-right">
+            <label for="password">كلمة المرور:</label>
+            <input type="password" class="form-control" id="password" name="password" placeholder="ادخل كلمة المرور">
+        </div>
+        <div class="form-group text-right">
+          <label for="{{ form.child_name.id_for_label }}">اسم الطفل:</label>
+          <input type="text" class="form-control" id="child_name" name="child_name" placeholder="ادخل اسم الطفل">
+        </div>
+        <div class="form-group">
+            <label for="dob">تاريخ الميلاد:</label>
+            <input type="date" class="form-control" id="dob" name="dob">
+        </div>
+
+
+{#      <div class="form-group">#}
+{#        <label for="id_previous_vaccinations">Previous Vaccinations:</label>#}
+{#          <select name="previous_vaccinations" id="previous_vaccinations" class="form-control" multiple>#}
+{#              {% for vaccine in form.previous_vaccinations %}#}
+{#                <option value="">{{ vaccine }}</option>#}
+{#              {% endfor %}#}
+{#        </select>#}
+{#      </div>#}
+
+            {{ form.previous_vaccinations|as_crispy_field }}
+
+            <div class="form-group">
+              <button type="submit" class="btn btn-primary btn-block">Register</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+    {{ block.super }}
+    <script>
+        const today = new Date();
+        today.setFullYear(today.getFullYear() - 5);
+        const thirtyDaysFromToday = new Date();
+
+        document.getElementById("dob").min = today.toISOString().split("T")[0];
+        document.getElementById("dob").max = thirtyDaysFromToday.toISOString().split("T")[0];
+    </script>
+{% endblock %}

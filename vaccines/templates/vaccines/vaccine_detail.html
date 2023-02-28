@@ -1,0 +1,12 @@
+{% extends 'base1.html' %}
+
+{% block content %}
+  <h1>{{ vaccine.name }}</h1>
+  <p>التفاصيل:</p>
+  <ul>
+    <li>تاريخ الإضافة: {{ vaccine.created_at }}</li>
+    <li>تاريخ آخر تحديث: {{ vaccine.updated_at }}</li>
+    <li>الوصف: {{ vaccine.description }}</li>
+    <li>السعر: {{ vaccine.price }} جنيه مصري</li>
+  </ul>
+{% endblock %}
