@@ -1,56 +1,70 @@
-{% extends 'base1.html' %}
-{% load crispy_forms_filters %}
-
-{% block title %}Register{% endblock %}
-
+{% extends 'base.html' %}
 {% block content %}
-<div class="container">
-  <div class="row justify-content-center">
-    <div class="col-md-6">
-      <div class="card">
-        <div class="card-body">
-          <h2 class="card-title text-center mb-4">تسجيل الدخول</h2>
-          <form method="post" class="text-right">
-            {% csrf_token %}
-        <div class="form-group text-right">
-            <label for="username">اسم المستخدم:</label>
-            <input type="text" class="form-control" id="username" name="username" placeholder="ادخل اسم المستخدم">
-        </div>
-        <div class="form-group text-right">
-            <label for="password">كلمة المرور:</label>
-            <input type="password" class="form-control" id="password" name="password" placeholder="ادخل كلمة المرور">
-        </div>
-        <div class="form-group text-right">
-          <label for="{{ form.child_name.id_for_label }}">اسم الطفل:</label>
-          <input type="text" class="form-control" id="child_name" name="child_name" placeholder="ادخل اسم الطفل">
-        </div>
-        <div class="form-group">
-            <label for="dob">تاريخ الميلاد:</label>
-            <input type="date" class="form-control" id="dob" name="dob">
-        </div>
+
+    {% block extra_css %}
+        <link rel="stylesheet" href="https://cdn.lineicons.com/2.0/LineIcons.css">
+    {% endblock %}
+
+    <!-- Main -->
+    <main class="bodyCreateAcc">
+        <div class="containerCreateAccount">
+            <div class="title">التسجيل</div>
+            <div class="content">
+                <form method="post" action="#">
+                    {% csrf_token %}
+                    <div class="user-details">
+
+                        <div class="input-box">
+                            <span class="details">اسم المستخدم</span>
+                            <input type="text" name="username" placeholder="اسم المستخدم" required>
+                        </div>
+                        <div class="input-box">
+                            <span class="details">الايميل</span>
+                            <input type="email" name="email" placeholder="الايميل" required>
+                        </div>
+
+                        <div class="input-box">
+                            <span class="details">كلمة المرور</span>
+                            <input type="password" name="password" placeholder="كلمة المرور" required>
+                        </div>
+                        <div class="input-box">
+                            <span class="details">تأكيد كلمة المرور</span>
+                            <input type="password" name="password" placeholder="تأكيد كلمة المرور" required>
+                        </div>
+
+                        <div class="input-box">
+                            <span class="details">اسم الطفل</span>
+                            <input type="text" name="child_name" placeholder="اسم الطفل" required>
+                        </div>
+
+                        <div class="input-box">
+                            <span class="details">تاريخ الميلاد </span>
+                            <input type="date" name="dob" id="dob" placeholder="تاريخ الميلاد" required>
+                        </div>
+                        <div class="input-box">
+                            <span class="details">التطعيمات السابقة</span>
+                            <div class="previous-vaccinations">
+                                {% for checkbox in form.previous_vaccinations %}
+                                    <div class="form-check">
+                                        {{ checkbox }}
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                    </div>
 
 
-{#      <div class="form-group">#}
-{#        <label for="id_previous_vaccinations">Previous Vaccinations:</label>#}
-{#          <select name="previous_vaccinations" id="previous_vaccinations" class="form-control" multiple>#}
-{#              {% for vaccine in form.previous_vaccinations %}#}
-{#                <option value="">{{ vaccine }}</option>#}
-{#              {% endfor %}#}
-{#        </select>#}
-{#      </div>#}
-
-            {{ form.previous_vaccinations|as_crispy_field }}
-
-            <div class="form-group">
-              <button type="submit" class="btn btn-primary btn-block">Register</button>
+                    <div class="button">
+                        <input type="submit" value="التسجيل">
+                    </div>
+                </form>
             </div>
-          </form>
         </div>
-      </div>
-    </div>
-  </div>
-</div>
+    </main>
+
 {% endblock %}
+
 {% block extra_js %}
     {{ block.super }}
     <script>

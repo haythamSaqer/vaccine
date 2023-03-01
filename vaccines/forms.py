@@ -24,10 +24,7 @@ class AppointmentForm(forms.ModelForm):
 class CreateUserForm(forms.ModelForm):
     previous_vaccinations = forms.ModelMultipleChoiceField(
         queryset=Vaccine.objects.all(),
-        widget=forms.SelectMultiple(attrs={
-            'class': 'form-control',
-            'id': 'previous_vaccinations',
-        }),
+        widget=forms.CheckboxSelectMultiple,
         required=False,
     )
 
@@ -49,10 +46,11 @@ class CreateUserForm(forms.ModelForm):
         user.password = make_password(self.cleaned_data["password"])
         if commit:
             user.save()
+            user.previous_vaccinations.set(self.cleaned_data['previous_vaccinations'])
         return user
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.fields['previous_vaccinations'].queryset = Vaccine.objects.all()
-        self.fields['previous_vaccinations'].widget.choices = [(vaccine.id, vaccine.name) for vaccine in
-                                                               Vaccine.objects.all()]
+    # def __init__(self, *args, **kwargs):
+    #     super().__init__(*args, **kwargs)
+    #     self.fields['previous_vaccinations'].queryset = Vaccine.objects.all()
+    #     self.fields['previous_vaccinations'].widget.choices = [(vaccine.id, vaccine.name) for vaccine in
+    #                                                            Vaccine.objects.all()]

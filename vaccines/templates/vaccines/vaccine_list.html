@@ -1,27 +1,26 @@
-{% extends 'base1.html' %}
-
-{% block title %}Vaccines{% endblock %}
+{% extends 'base.html' %}
 
 {% block content %}
-  <h1 class="my-4">Vaccines</h1>
-  <div class="row">
-    {% for vaccine in vaccines %}
-      <div class="col-md-4">
-        <div class="card mb-4 shadow-sm">
-          <div class="card-body">
-            <h5 class="card-title">{{ vaccine.name }}</h5>
-            <p class="card-text">{{ vaccine.description }}</p>
-            <div class="d-flex justify-content-between align-items-center">
-              <div class="btn-group">
-                <a href="{% url 'vaccines:vaccine_detail' vaccine.id %}" class="btn btn-sm btn-outline-secondary">View</a>
-                <a href="{% url 'vaccines:book_appointment' vaccine.id %}" class="btn btn-sm btn-outline-secondary">Book Appointment</a>
+<main>
+        <div class="container">
+            <h2 class="mainList">قائمة التطعيمات</h2>
+            <div class="row row-cols-1 row-cols-md-3 g-4">
+                {% for vaccine in vaccines %}
+                <div class="col">
+                  <div class="card h-100">
+                    <div class="card-body">
+                      <h5 class="card-title">{{ vaccine.name }}</h5>
+                      <p class="card-text">{{ vaccine.visit }}</p>
+                    </div>
+                    <div class="d-flex justify-content-center">
+{#                        <button type="button" class="btn btn-outline-secondary"><a href="{% url 'vaccines:vaccine_detail' vaccine.id %}">عرض التفاصيل</a></button>#}
+                        <button type="button" class="btn btn-outline-secondary"><a href="{% url 'vaccines:book_appointment' vaccine.id %}">حجز موعد</a></button>
+                    </div>
+                  </div>
+                </div>
+                {% endfor %}
               </div>
-            </div>
-          </div>
         </div>
-      </div>
-    {% empty %}
-      <p>No vaccines available.</p>
-    {% endfor %}
-  </div>
+
+    </main>
 {% endblock %}

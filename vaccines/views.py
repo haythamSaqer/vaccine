@@ -2,33 +2,15 @@ from django.contrib import messages
 from django.contrib.auth import logout, authenticate, login
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import AuthenticationForm
-from django.shortcuts import render, get_object_or_404, redirect
-from django.http import HttpResponseRedirect
-from django.urls import reverse
+from django.core.exceptions import MultipleObjectsReturned
 from django.core.mail import send_mail
-from .tasks import send_confirmation_email
+from django.http import HttpResponseRedirect
+from django.shortcuts import render, get_object_or_404, redirect
+from django.urls import reverse
+
 from .forms import CreateUserForm
-from .models import Vaccine, Appointment, ConfirmationEmail, User
-
-
-# def register(request):
-#     print('test1')
-#     if request.method == 'POST':
-#         print('test4')
-#         form = CustomUserCreationForm(request.POST)
-#         formset = ChildFormSet(request.POST, instance=form.instance)
-#         if form.is_valid() and formset.is_valid():
-#             print('test2')
-#             user = form.save()
-#             formset.instance = user
-#             formset.save()
-#             messages.success(request, 'تم إنشاء الحساب بنجاح')
-#             return redirect('login')
-#     else:
-#         print('test3')
-#         form = CustomUserCreationForm()
-#         formset = ChildFormSet(instance=User())
-#     return render(request, 'accounts/registration1.html', {'form': form, 'formset': formset})
+from .models import Vaccine, Appointment, ConfirmationEmail, User, HealthCenter
+from .tasks import send_confirmation_email, send_center_email
 
 
 def register(request):
@@ -36,10 +18,27 @@ def register(request):
         form = CreateUserForm(request.POST)
         if form.is_valid():
             form.save()
-            return redirect('vaccines:vaccine_list')  # Replace 'home' with your desired redirect URL
+            username = form.cleaned_data.get('username')
+            password = form.cleaned_data.get('password')
+            user = authenticate(request, username=username, password=password)
+            if user is not None:
+                login(request, user)
+                return redirect('vaccines:vaccine_list')
+            else:
+                messages.error(request, 'اسم المستخدم او كلمة المرور غير صحيحة')
+
+            messages.success(request, 'Your account has been created successfully. You can now log in.')
+            return redirect('vaccines:vaccine_list')
+        else:
+            print(form.errors)
+            messages.error(request, 'يوجد خطأ في البيانات المدخلة, يرجى المحاولة مرى اخرى')
+
     else:
         form = CreateUserForm()
-    return render(request, 'accounts/registration.html', {'form': form})
+
+    return render(request, 'accounts/registration.html', {
+        'form': form,
+    })
 
 
 def user_login(request):
@@ -53,9 +52,9 @@ def user_login(request):
                 login(request, user)
                 return redirect('vaccines:vaccine_list')
             else:
-                messages.error(request, 'Invalid username or password')
+                messages.error(request, 'اسم المستخدم او كلمة المرور غير صحيحة')
         else:
-            messages.error(request, 'Invalid username or password')
+            messages.error(request, 'اسم المستخدم او كلمة المرور غير صحيحة')
     else:
         form = AuthenticationForm()
     return render(request, 'accounts/login.html', {'form': form})
@@ -70,30 +69,83 @@ def user_logout(request):
 def vaccine_list(request):
     user = get_object_or_404(User, pk=request.user.id)
     vaccines = Vaccine.objects.exclude(pk__in=user.previous_vaccinations.all().values_list('pk', flat=True))
-    return render(request, 'vaccines/vaccine_list1.html', {'vaccines': vaccines})
+    return render(request, 'vaccines/vaccine_list.html', {'vaccines': vaccines})
 
 
+@login_required
 def book_appointment(request, vaccine_id):
     vaccine = get_object_or_404(Vaccine, pk=vaccine_id)
     user = get_object_or_404(User, pk=request.user.id)
+    health_centers = HealthCenter.objects.all()
     if request.method == 'POST':
         date = request.POST['date']
         email = request.POST['email']
-        appointment = Appointment.objects.create(vaccine=vaccine, date=date, father=user, email=email)
-        confirmation_email = ConfirmationEmail.objects.create(appointment=appointment)
-        send_confirmation_email.delay(appointment.id)
-
+        health_center_id = request.POST['health_center']
+        health_center = get_object_or_404(HealthCenter, pk=health_center_id)
+        try:
+            appointment = Appointment.objects.get(vaccine=vaccine, date=date, father=user)
+            messages.error(request, 'لقد قمت بالفعل بالتسجيل لتلقي هذا اللقاح')
+            return HttpResponseRedirect(reverse('vaccines:appointment_confirmation', args=(vaccine_id, date)))
+        except Appointment.DoesNotExist:
+            try:
+                appointment = Appointment.objects.create(vaccine=vaccine, date=date, father=user, email=email,
+                                                         health_center=health_center)
+                confirmation_email = ConfirmationEmail.objects.create(appointment=appointment)
+                # send_confirmation_email.delay(appointment.id)
+                send_mail(
+                    'Appointment Confirmation',
+                    f'You have booked an appointment for {appointment.vaccine.name} on {appointment.date}  at {appointment.health_center.name}.',
+                    'info@ksavaccine.com',
+                    [appointment.email],
+                    fail_silently=False,
+                )
+                user.previous_vaccinations.add(vaccine)
+            except MultipleObjectsReturned:
+                appointments = Appointment.objects.filter(vaccine=vaccine, date=date, father=user)
+                appointments.delete()
+                appointment = Appointment.objects.create(vaccine=vaccine, date=date, father=user, email=email)
+                confirmation_email = ConfirmationEmail.objects.create(appointment=appointment)
+                send_confirmation_email.delay(appointment.id)
+                user.previous_vaccinations.add(vaccine)
         return HttpResponseRedirect(reverse('vaccines:appointment_confirmation', args=(vaccine_id, date)))
-    return render(request, 'vaccines/book_appointment.html', {'vaccine': vaccine})
+    return render(request, 'vaccines/book_appointment.html', {'vaccine': vaccine, 'health_centers': health_centers})
 
 
-def appointment_confirmation(request, vaccine_id , date):
+def appointment_confirmation(request, vaccine_id, date):
     appointment = get_object_or_404(Appointment, vaccine__id=vaccine_id, date=date)
     confirmation_email = get_object_or_404(ConfirmationEmail, appointment=appointment)
-    return render(request, 'vaccines/appointment_confirmation.html', {'appointment': appointment, 'confirmation_email': confirmation_email})
+    return render(request, 'vaccines/appointment_confirmation.html',
+                  {'appointment': appointment, 'confirmation_email': confirmation_email})
 
 
 def vaccine_detail(request, vaccine_id):
     vaccine = get_object_or_404(Vaccine, pk=vaccine_id)
     context = {'vaccine': vaccine}
     return render(request, 'vaccines/vaccine_detail.html', context)
+
+
+def health_centers_list(request):
+    centers = HealthCenter.objects.all()
+    context = {'centers': centers}
+    return render(request, 'vaccines/health_centers_list.html', context)
+
+
+def send_email(request, center_id):
+    center = get_object_or_404(HealthCenter, id=center_id)
+    if request.method == 'POST':
+        subject = request.POST['subject']
+        message = request.POST['message']
+        sender = request.user.email
+        recipient = center.email
+        # send_center_email.delay(subject, message, sender, recipient)
+        print('test')
+        send_mail(
+            subject,
+            message,
+            sender,
+            [recipient],
+            fail_silently=False,
+        )
+        messages.success(request, 'لقد تم تلقي استفسارك سيتم التواصل معك في اقرب وقت')
+        return render(request, 'vaccines/email_sent.html', {'center': center})
+    return render(request, 'vaccines/email_sent.html', {'center': center})
